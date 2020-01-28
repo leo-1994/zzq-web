@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    password:
+    username:
+    url:
+  redis:
+    host:
+    port:
+    password:
+    jedis:
+      pool:
+        max-active: 8
+server:
+  port: 8000

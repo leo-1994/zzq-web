@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset=utf-8>
+    <meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no">
+    <link href="/layui/css/layui.css" rel="stylesheet">
+    <script src="/common.js"></script>
+    <script src="/layui/layui.js"></script>
+    <title>自走棋阵容模拟器</title>
+</head>
+<style>
+    .footer-text {
+        font-size: 12px;
+        text-align: left;
+        line-height: 16px;
+    }
+
+    .hero {
+        width: 60px;
+        height: 80px;
+        float: left;
+        margin: 2px;
+    }
+
+    .heroIcon {
+        height: 60px;
+        background-color: #0C0C0C;
+    }
+
+    .heroIcon img {
+        width: 100%;
+    }
+
+    .heroName {
+        height: 20px;
+        text-align: center;
+        font-size: 10px;
+        line-height: 20px;
+        font-family: "微软雅黑";
+    }
+
+    #mmrArea {
+        margin-top: 20px;
+    }
+
+    #mmrArea p {
+        line-height: 30px;
+    }
+
+    #mmrArea span {
+        color: #009688;
+    }
+
+    #topArea span {
+        margin-right: 10px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .viewFilterButton {
+        width: 100%;
+        text-align: center;
+        line-height: 40px;
+        color: #009688;
+    }
+
+    #filterArea {
+        margin-left: -50px;
+    }
+
+    /*.layui-footer p {*/
+    /*text-align: center;*/
+    /*}*/
+</style>
+<body>
+<div class="layui-container" id="main">
+    <div class="layui-tab layui-tab-brief">
+        <ul class="layui-tab-title">
+            <li class="layui-this">阵容模拟</li>
+            <li>阵容排行</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div class="layui-row">
+                    <div class="layui-col-md12 layui-col-xs12 head">
+                        <h2 style="text-align: center;padding: 10px;">自走棋阵容模拟器</h2>
+                    </div>
+                    <div class="layui-col-md12 layui-col-xs12">
+                        <div onclick="viewFilter(this)"
+                             class="viewFilterButton">点击筛选 ◀
+                        </div>
+                        <form class="layui-form hidden" action="" id="filterArea">
+                            <div class="layui-form-item race" pane="">
+                                <label class="layui-form-label">种族：</label>
+                                <div class="layui-input-block" id="raceArea">
+                                </div>
+                            </div>
+                            <div class="layui-form-item career" pane="">
+                                <label class="layui-form-label">职业：</label>
+                                <div class="layui-input-block" id="careerArea">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="layui-col-md6 layui-col-xs12" id="heroArea">
+                    </div>
+                    <div class="layui-col-md2 layui-col-xs12">
+                        <p style="text-align: center;padding:50px 0 50px 0; ">点击英雄头像选择</p>
+                    </div>
+                    <div class="layui-col-md4 layui-col-xs12" id="chosenArea">
+                    </div>
+                </div>
+                <div class="layui-row">
+                    <fieldset class="layui-elem-field layui-col-md6 layui-col-md-offset3 layui-col-xs12">
+                        <legend style="text-align: center;color: #1E9FFF;">buff</legend>
+                        <div class="layui-field-box" id="effectArea">
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="layui-row">
+                    <div class="layui-col-md6 layui-col-md-offset3 layui-col-xs12" id="topArea">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="layui-footer">
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;text-align: center;">
+        <legend>© 2019 by leo</legend>
+    </fieldset>
+    <div class="layui-container">
+        <div class="layui-row">
+
+        </div>
+        <div class="layui-row" style="padding:10px;">
+            <div class="layui-col-md12 layui-col-xs12">
+                github： <a href="https://github.com/leo-1994/zzq-web" style="color: #1f4977;">github.com/leo-1994/zzq-web</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById("main").style.minHeight = window.innerHeight - 80 + "px";
+
+    var heroArray = [];
+    var count = 0;
+    var heroes = [];
+    var career = [];
+    var race = [];
+    var tag = [];
+    var checkTags = [];
+    var filterHiddenFlag = true;
+
+    function viewFilter(obj) {
+        if (filterHiddenFlag) {
+            filterHiddenFlag = false;
+            document.getElementById("filterArea").classList.remove("hidden");
+            obj.innerHTML = "点击折叠 ▼";
+        } else {
+            filterHiddenFlag = true;
+            document.getElementById("filterArea").classList.add("hidden");
+            obj.innerHTML = "点击筛选 ◀";
+        }
+    }
+
+    //注意：选项卡 依赖 element 模块，否则无法进行功能性操作
+    layui.use('element', function () {
+        var element = layui.element;
+    });
+    layui.use(['layer', 'jquery', 'form'], function () {
+        var $ = layui.jquery, layer = layui.layer; //独立版的layer无需执行这一句
+        var form = layui.form; //只有执行了这一步，部分表单元素才会自动修饰成功
+        var heroArea = $("#heroArea");
+        //配置一个透明的询问框
+        layer.msg('<p>一年前买的服务器就快到期了</p><p>阵容模拟器即将关闭</p><p>模拟器的代码我放在github上</p><p>有兴趣的朋友可以自行维护</p>',
+            {
+                time: 0, //20s后自动关闭
+                btn: ['知道啦'],
+                btnAlign: 'c'
+            });
+        $.get("/data/allDataForJson", function (res) {
+            heroes = res.data.hero;
+            career = res.data.career;
+            race = res.data.race;
+            tag = res.data.tag;
+            heroes.forEach(function (v, index) {
+                v.id = index;
+                heroArea.append("<div class='hero' title='" + v.tags + "' data-hero-id='" + v.id + "' data-hero-name='" + v.name + "' onclick='choice(this)'><div class='heroIcon'><img src='http://img.leo94.top/hero/icon/" + v.name + ".png' ></div><div class='heroName' style='color:" + v.color + ";'>" + v.name + "</div></div>");
+            });
+            var raceArea = $("#raceArea");
+            race.forEach(function (value) {
+                raceArea.append('<input type="checkbox" name="tag" value="' + value + '" lay-skin="primary" lay-filter="tag" title="' + value + '">');
+            });
+            var careerArea = $("#careerArea");
+            career.forEach(function (value) {
+                careerArea.append('<input type="checkbox" name="tag" value="' + value + '" lay-skin="primary" lay-filter="tag" title="' + value + '">');
+            });
+            form.render();
+        });
+        form.on('checkbox(tag)', function (data) {
+            if (data.elem.checked) {
+                checkTags.push(data.value);
+            } else {
+                checkTags.forEach(function (value, index) {
+                    if (value === data.value) {
+                        checkTags.splice(index, 1);
+                    }
+                })
+            }
+            var checkedHeroes = getHeroWithTag();
+            heroArea.empty();
+            checkedHeroes.forEach(function (v) {
+                heroArea.append("<div class='hero' title='" + v.tags + "' data-hero-id='" + v.id + "' data-hero-name='" + v.name + "' onclick='choice(this)'><div class='heroIcon'><img src='http://img.leo94.top/hero/icon/" + v.name + ".png' ></div><div class='heroName' style='color:" + v.color + ";'>" + v.name + "</div></div>");
+            });
+        });
+        // $.get("/data/allHero", function (res) {
+        //     var heroArea = $("#heroArea");
+        //     heroArray = res.data;
+        //     heroArray.forEach(function (v) {
+        //         heroArea.append("<div class='hero' title='" + v.tags + "' data-hero-id='" + v.id + "' data-hero-name='" + v.name + "' onclick='choice(this)'><div class='heroIcon'><img src='http://img.leo94.top/hero/icon/" + v.name + ".png' ></div><div class='heroName' style='color:" + getColor(v.level) + ";'>" + v.name + "</div></div>");
+        //     });
+        // });
+        $.get("/data/getTop20Team", function (res) {
+            var topArea = $("#topArea");
+            var teamArr = res.data;
+            teamArr.forEach(function (v, index) {
+                var iconStr = '';
+                v.heroNames.split(",").forEach(function (value) {
+                    iconStr += "<img class='img-hero-icon' src='http://img.leo94.top/hero/icon/" + value + ".png' >";
+                });
+                topArea.append("<div class='team'><div>" + "<span>排名:" + (index + 1) +
+                    "</span><span>胜率:" + v.winRate +
+                    "%</span><span>平均排名:" + v.avgRank +
+                    "</span>" +
+                    "</div><div>" +
+                    iconStr + "</div><div>buff:" + v.buffs +
+                    "</div></div><hr>");
+            });
+        });
+    });
+
+    function choice(obj) {
+        if (count >= 10) {
+            return;
+        }
+        var id = layui.$(obj).attr("data-hero-id");
+        count++;
+        var hero = heroes[id];
+        layui.$("#chosenArea").append("<div class='hero' title='" + hero.tags + "' data-hero-id='" + hero.id + "' data-hero-name='" + hero.name + "' onclick='del(this)'><div class='heroIcon'><img src='http://img.leo94.top/hero/icon/" + hero.name + ".png' ></div><div class='heroName' style='color:" + hero.color + ";'>" + hero.name + "</div></div>");
+        viewEffect();
+    }
+
+    function del(obj) {
+        count--;
+        obj.remove();
+        viewEffect();
+    }
+
+    function viewEffect() {
+        var chosenHero = getChosenHero();
+        var effectArea = layui.$("#effectArea");
+        if (chosenHero.length === 0) {
+            effectArea.empty();
+        }
+        var heroNames = chosenHero.join(",");
+        layui.$.get("/data/effectResult?heroNames=" + heroNames, function (res) {
+            if (res.code === 0) {
+                effectArea.empty();
+                res.data.forEach(function (v) {
+                    effectArea.append("<p>" + v.name + ":" + v.detail + "</p>");
+                });
+            }
+        });
+    }
+
+    function getChosenHero() {
+        var chosenHero = [];
+        layui.$("#chosenArea").children().each(function (index, element) {
+            chosenHero.push(layui.$(element).attr("data-hero-name"));
+        });
+        return chosenHero;
+    }
+
+    function getHeroWithTag() {
+        if (checkTags.length === 0) {
+            return heroes;
+        }
+        var heroesWithTag = [];
+        for (var i = 0; i < heroes.length; i++) {
+            if (hasTag(heroes[i].tags, checkTags)) {
+                heroesWithTag.push(heroes[i]);
+            }
+        }
+        return heroesWithTag;
+    }
+
+    function hasTag(heroTags) {
+        var flag;
+        for (var j = 0; j < checkTags.length; j++) {
+            flag = false;
+            for (var i = 0; i < heroTags.length; i++) {
+                if (heroTags[i] === checkTags[j]) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) {
+                break;
+            }
+        }
+        return flag;
+    }
+</script>
+</body>
+</html>

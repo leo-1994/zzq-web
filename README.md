@@ -19,3 +19,4 @@ nohup java -Xmx200M -Xms50M -jar ./target/zzq-0.0.1-SNAPSHOT.jar --spring.profil
 #### 使用说明
 
 1. maven打包前请先将application-dev和application-prod中的db和redis连接配置项补全
+2. 数据库结构在zzq.sql文件中，数据在data.sql中，请自行导入到mysql中
